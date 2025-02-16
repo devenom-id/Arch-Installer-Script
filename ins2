@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+echo " -- SETTING TIME -- "
+ln -sf /usr/share/zoneinfo/America/Argentina/Buenos_Aires /etc/localtime
+hwclock --systohc
+timedatectl set-ntp true
+echo " -- SETTING LOCALES -- "
+echo "en_US.UTF-8 UTF-8" >/etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" >/etc/locale.conf
+echo "KEYMAP=la-latin1" >/etc/vconsole.conf
+echo "localhost" >/etc/hostname
+# install fundamental packages
+echo " -- INSTALLING FUNDAMENTAL PACKAGES -- "
+pacman -Sy sudo grub efibootmgr neovim base-devel NetworkManager --noconfirm
+# create user
+echo " -- USER CONFIG -- "
+read username
+useradd -m $username
+echo "\tPassword for $username"
+passwd $username
+echo "\tPassword for root"
+passwd root
+# fundamental settings
+echo " -- SETTING SUDO AND BOOTLOADER -- "
+line=cat -n /etc/sudoers | grep "group wheel" | awk '{print $1}'
+line=$(expr $line + 1)
+sed $line's/#//' /etc/sudoers -i
+grub-install /dev/sda
+grub-mkconfig -o /boot/grub/grub.cfg
+systemctl enable NetworkManager.service
+# install xorg, wm, dm
+echo " -- INSTALLING USER APPS"
+pacman -S xorg xfce4 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-zeroconf pavucontrol bluez bluez-utils bluez-libs vivaldi --noconfirm
+git clone aur/yay.git
+cd yay
+makepkg -si --noconfirm
+cd ..
+rm -rf yay
+# configure nvim
+mkdir -p /home/$username/.config
+git clone https://github.com/LazyVim/LazyVim /home/$username/.config/nvim
