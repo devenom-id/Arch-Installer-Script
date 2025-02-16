@@ -11,19 +11,22 @@ echo "KEYMAP=la-latin1" >/etc/vconsole.conf
 echo "localhost" >/etc/hostname
 # install fundamental packages
 echo " -- INSTALLING FUNDAMENTAL PACKAGES -- "
-pacman -Sy sudo grub efibootmgr neovim base-devel networkmanager --noconfirm
+pacman -Sy sudo grub efibootmgr neovim base-devel git networkmanager --noconfirm
 # create user
 echo " -- USER CONFIG -- "
 printf "Username: "
 read username
 useradd -m $username
-echo "\tPassword for $username"
-passwd $username
-echo "\tPassword for root"
-passwd root
+usermod -aG audio,video,storage,wheel,$username $username
+printf "Password for $username: "
+read upswd
+printf $upswd | passwd -s $username
+printf "Password for root: "
+read rpswd
+printf $rpswd | passwd -s root
 # fundamental settings
 echo " -- SETTING SUDO AND BOOTLOADER -- "
-line=cat -n /etc/sudoers | grep "group wheel" | awk '{print $1}'
+line=cat -n /etc/sudoers | grep "Same" | awk '{print $1}'
 line=$(expr $line + 1)
 sed $line's/#//' /etc/sudoers -i
 grub-install /dev/sda
@@ -31,12 +34,16 @@ grub-mkconfig -o /boot/grub/grub.cfg
 systemctl enable NetworkManager.service
 # install xorg, wm, dm
 echo " -- INSTALLING USER APPS"
-pacman -S xorg xfce4 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-zeroconf pavucontrol bluez bluez-utils bluez-libs vivaldi --noconfirm
-git clone aur/yay.git
-cd yay
-makepkg -si --noconfirm
+pacman -S xorg xfce4 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-zeroconf pavucontrol bluez bluez-utils bluez-libs vivaldi go bash-completion ly --noconfirm
+systemctl enable ly
+git clone https://aur.archlinux.org/yay.git /home/$username/yay
+chown -R $username /home/$username/yay
+cd /home/$username/yay
+su $username -c "makepkg -si --noconfirm"
 cd ..
 rm -rf yay
 # configure nvim
 mkdir -p /home/$username/.config
-git clone https://github.com/LazyVim/LazyVim /home/$username/.config/nvim
+git clone https://github.com/LazyVim/starter /home/$username/.config/nvim
+rm -rf /home/$username/.config/nvim/.git
+chown -R $username /home/$username/.config
