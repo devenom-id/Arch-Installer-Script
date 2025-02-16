@@ -26,7 +26,7 @@ read rpswd
 printf $rpswd | passwd -s root
 # fundamental settings
 echo " -- SETTING SUDO AND BOOTLOADER -- "
-line=cat -n /etc/sudoers | grep "Same" | awk '{print $1}'
+line=$(cat -n /etc/sudoers | grep "Same" | awk '{print $1}')
 line=$(expr $line + 1)
 sed $line's/#//' /etc/sudoers -i
 grub-install /dev/sda
