@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # internet (ask wireless or ethernet)
 # partition
+echo " -- PARTITIONING DISK -- "
 parted -a optimal /dev/sda mklabel gpt
 parted -a optimal /dev/sda mkpart primary fat32 1MiB 501MiB
 parted -a optimal /dev/sda set 1 esp on
@@ -10,49 +11,18 @@ mkfs.vfat -F32 /dev/sda1
 mkfs.ext4 /dev/sda2
 mkfs.ext4 /dev/sda3
 # mount partition
+echo " -- MOUNTING PARTITIONS -- "
 mount /dev/sda2 /mnt
 mkdir -p /mnt/boot/efi
 mount /dev/sda1 /mnt/boot/efi
 mkdir -p /mnt/home
 mount /dev/sda3 /mnt/home
 # update keyring
-pacman -Sy archlinux-keyring
+pacman -Sy archlinux-keyring --noconfirm
 # install the system
+echo " -- INSTALLING THE SYSTEM -- "
 pacstrap /mnt base linux linux-firmware
 # basic configuration of new system
 genfstab -U /mnt >/mnt/etc/fstab
-arch-chroot /mnt
-ln -sf /usr/share/zoneinfo/America/Argentina/Buenos_Aires /etc/localtime
-hwclock --systohc
-timedatectl set-ntp true
-echo "en_US.UTF-8 UTF-8" >/etc/locale.gen
-locale-gen
-echo "LANG=en_US.UTF-8" >/etc/locale.conf
-echo "KEYMAP=la-latin1" >/etc/vconsole.conf
-echo "localhost" >/etc/hostname
-# install fundamental packages
-pacman -Sy sudo grub efibootmgr neovim base-devel NetworkManager
-# create user
-read username
-useradd -m $username
-echo "Password for $username"
-passwd $username
-echo "Password for root"
-passwd root
-# fundamental settings
-line=cat -n /etc/sudoers | grep "group wheel" | awk '{print $1}'
-line=$(expr $line + 1)
-sed $line's/#//' /etc/sudoers -i
-grub-install /dev/sda
-grub-mkconfig -o /boot/grub/grub.cfg
-systemctl enable NetworkManager.service
-# install xorg, wm, dm
-pacman -S xorg xfce4 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-zeroconf pavucontrol bluez bluez-utils bluez-libs vivaldi
-git clone aur/yay.git
-cd yay
-makepkg -si
-cd ..
-rm -rf yay
-# configure nvim
-mkdir -p /home/$username/.config
-git clone https://github.com/LazyVim/LazyVim /home/$username/.config/nvim
+mv ins2 /mnt/
+chmod +x /mnt/ins2
