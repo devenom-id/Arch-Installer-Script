@@ -11,9 +11,10 @@ echo "KEYMAP=la-latin1" >/etc/vconsole.conf
 echo "localhost" >/etc/hostname
 # install fundamental packages
 echo " -- INSTALLING FUNDAMENTAL PACKAGES -- "
-pacman -Sy sudo grub efibootmgr neovim base-devel NetworkManager --noconfirm
+pacman -Sy sudo grub efibootmgr neovim base-devel networkmanager --noconfirm
 # create user
 echo " -- USER CONFIG -- "
+printf "Username: "
 read username
 useradd -m $username
 echo "\tPassword for $username"
